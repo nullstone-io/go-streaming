@@ -8,12 +8,12 @@ import (
 
 type logPubContextKey struct{}
 
-func ContextWithLogPub(ctx context.Context, pub LogPublisher) context.Context {
+func ContextWithLogPub(ctx context.Context, pub TextPublisher) context.Context {
 	return context.WithValue(ctx, logPubContextKey{}, pub)
 }
 
-func LogPubFromContext(ctx context.Context) LogPublisher {
-	val, _ := ctx.Value(logPubContextKey{}).(LogPublisher)
+func LogPubFromContext(ctx context.Context) TextPublisher {
+	val, _ := ctx.Value(logPubContextKey{}).(TextPublisher)
 	return val
 }
 
@@ -22,6 +22,12 @@ type LogMessage struct {
 	Phase  string // represents the action being taken that generated the message, e.g. - the phase of the deploy (e.g. init, checkout, build, etc.)
 	Logs   string // the message text
 }
+
+type TextPublisher interface {
+	Notify(message LogMessage)
+}
+
+var _ TextPublisher = &LogPublisher{}
 
 type LogPublisher struct {
 	redisClient *redis.Client
