@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func NewRedisClient(redisUrl string) (*redis.Client, error) {
+func NewClient(redisUrl string) (*redis.Client, error) {
 	if redisUrl == "" {
 		return nil, fmt.Errorf("no redis url provided")
 	}
