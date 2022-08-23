@@ -16,7 +16,7 @@ type Listener struct {
 	adapter     Adapter
 }
 
-func NewListener(streamName string, redisClient *redis.Client, adapter Adapter) *Listener {
+func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) *Listener {
 	return &Listener{
 		streamName:  streamName,
 		redisClient: redisClient,
