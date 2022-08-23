@@ -8,15 +8,13 @@ import (
 
 type logPubContextKey struct{}
 
-func ContextWithLogPub(ctx context.Context, pub *LogPublisher) context.Context {
+func ContextWithLogPub(ctx context.Context, pub LogPublisher) context.Context {
 	return context.WithValue(ctx, logPubContextKey{}, pub)
 }
 
-func LogPubFromContext(ctx context.Context) *LogPublisher {
-	if val, ok := ctx.Value(logPubContextKey{}).(*LogPublisher); ok {
-		return val
-	}
-	return nil
+func LogPubFromContext(ctx context.Context) LogPublisher {
+	val, _ := ctx.Value(logPubContextKey{}).(LogPublisher)
+	return val
 }
 
 type LogMessage struct {
