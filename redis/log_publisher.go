@@ -6,6 +6,19 @@ import (
 	"time"
 )
 
+type logPubContextKey struct{}
+
+func ContextWithLogPub(ctx context.Context, pub *LogPublisher) context.Context {
+	return context.WithValue(ctx, logPubContextKey{}, pub)
+}
+
+func LogPubFromContext(ctx context.Context) *LogPublisher {
+	if val, ok := ctx.Value(logPubContextKey{}).(*LogPublisher); ok {
+		return val
+	}
+	return nil
+}
+
 type LogMessage struct {
 	Stream string // represents where the message originated, e.g. - the deploy that generated the logs
 	Phase  string // represents the action being taken that generated the message, e.g. - the phase of the deploy (e.g. init, checkout, build, etc.)
