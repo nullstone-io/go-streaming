@@ -15,6 +15,19 @@ type Publisher struct {
 	redisClient *redis.Client
 }
 
+type contextKey struct{}
+
+func ContextWithPublisher(ctx context.Context, pub *Publisher) context.Context {
+	return context.WithValue(ctx, contextKey{}, pub)
+}
+
+func PublisherFromContext(ctx context.Context) *Publisher {
+	if val, ok := ctx.Value(contextKey{}).(*Publisher); ok {
+		return val
+	}
+	return nil
+}
+
 func NewPublisher(redisClient *redis.Client) *Publisher {
 	return &Publisher{
 		redisClient: redisClient,
@@ -37,6 +50,14 @@ func (p *Publisher) PublishObject(strm string, event stream.EventType, object in
 	m := stream.Message{
 		Context: string(event),
 		Content: string(data),
+	}
+	p.publish(strm, m)
+}
+
+func (p *Publisher) PublishEot(strm string) {
+	m := stream.Message{
+		Context: "eot",
+		Content: stream.EndOfTransmission,
 	}
 	p.publish(strm, m)
 }
