@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"github.com/BSick7/go-api/json"
 	"github.com/gorilla/websocket"
+	"github.com/nullstone-io/go-streaming/stream"
 	"net/http"
 	"strings"
 )
 
 type Broker struct {
 	conn     *websocket.Conn
-	messages <-chan Message
+	messages <-chan stream.Message
 	errors   <-chan error
 	done     chan struct{}
 }
 
-func StartBroker(w *json.ResponseWriter, r *json.Request, msgs <-chan Message, errs <-chan error) (*Broker, error) {
+func StartBroker(w *json.ResponseWriter, r *json.Request, msgs <-chan stream.Message, errs <-chan error) (*Broker, error) {
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -47,8 +48,8 @@ func (b *Broker) writeLoop() {
 		for {
 			select {
 			case message := <-b.messages:
-				hasEot := strings.HasSuffix(message.Content, endOfTransmission)
-				message.Content = strings.TrimSuffix(message.Content, endOfTransmission)
+				hasEot := strings.HasSuffix(message.Content, stream.EndOfTransmission)
+				message.Content = strings.TrimSuffix(message.Content, stream.EndOfTransmission)
 				if len(message.Content) > 0 {
 					b.conn.WriteJSON(message)
 				}

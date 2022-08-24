@@ -1,8 +1,9 @@
-package redis
+package file
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/nullstone-io/go-streaming/stream"
 	"log"
 	"os"
 	"time"
@@ -14,14 +15,14 @@ var (
 
 type FileListener struct {
 	filename  string
-	publisher TextPublisher
+	publisher stream.Publisher
 	phase     string
 	stream    string
 	finish    chan bool // finish is signaled when the file listener should close
 	done      chan bool // done is signaled when file listener has completed cleanup
 }
 
-func NewFileListener(filename string, publisher TextPublisher, stream string, phase string) *FileListener {
+func NewFileListener(filename string, publisher stream.Publisher, stream string, phase string) *FileListener {
 	return &FileListener{
 		filename:  filename,
 		publisher: publisher,
@@ -68,11 +69,7 @@ func (l *FileListener) readLoop() {
 func (l *FileListener) readToEnd(file *os.File) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		l.publisher.Notify(LogMessage{
-			Stream: l.stream,
-			Phase:  l.phase,
-			Logs:   fmt.Sprintf("%s\n", scanner.Text()),
-		})
+		l.publisher.PublishLogs(l.stream, l.phase, fmt.Sprintf("%s\n", scanner.Text()))
 	}
 
 	if err := scanner.Err(); err != nil {

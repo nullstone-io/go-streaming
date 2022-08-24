@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"github.com/go-redis/redis/v8"
+	"github.com/nullstone-io/go-streaming/stream"
 )
 
 type Adapter interface {
-	Send([]redis.XMessage)
+	Send(message stream.Message)
+	Flush()
 }
 
 type Listener struct {
@@ -32,7 +34,7 @@ func (r *Listener) Listen(ctx context.Context) error {
 			Streams: []string{r.streamName, cursor},
 			Block:   0,
 		}
-		streams, err := r.redisClient.XRead(ctx, &args).Result()
+		groups, err := r.redisClient.XRead(ctx, &args).Result()
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return nil
@@ -40,9 +42,16 @@ func (r *Listener) Listen(ctx context.Context) error {
 				return err
 			}
 		}
-		for _, stream := range streams {
-			r.adapter.Send(stream.Messages)
-			cursor = stream.Messages[len(stream.Messages)-1].ID
+		for _, grp := range groups {
+			for _, msg := range grp.Messages {
+				m := stream.Message{
+					Context: msg.Values["context"].(string),
+					Content: msg.Values["content"].(string),
+				}
+				r.adapter.Send(m)
+				cursor = msg.ID
+			}
 		}
+		r.adapter.Flush()
 	}
 }

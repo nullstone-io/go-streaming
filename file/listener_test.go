@@ -1,25 +1,15 @@
-package redis
+package file
 
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
+	"github.com/nullstone-io/go-streaming/stream"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 )
-
-var _ TextPublisher = &TestNotifier{}
-
-type TestNotifier struct {
-	mock.Mock
-}
-
-func (t *TestNotifier) Notify(message LogMessage) {
-	t.MethodCalled("Notify", message)
-}
 
 func TestFileListener(t *testing.T) {
 	dir := "."
@@ -36,25 +26,24 @@ func TestFileListener(t *testing.T) {
 	phase := "plan"
 
 	lines := []string{"Initializing...\n", "Fetching module\n", "Done\n"}
-	expectedMessages := make([]LogMessage, len(lines))
+	expectedMessages := make([]stream.Message, len(lines))
 	for i, line := range lines {
-		expectedMessages[i] = LogMessage{
-			Stream: source,
-			Phase:  phase,
-			Logs:   line,
+		expectedMessages[i] = stream.Message{
+			Context: phase,
+			Content: line,
 		}
 	}
 
-	var notifier = new(TestNotifier)
+	var publisher = new(stream.MockPublisher)
 	for _, m := range expectedMessages {
-		notifier.On("Notify", m)
+		publisher.On("PublishLogs", source, m.Context, m.Content)
 	}
 
-	listener := NewFileListener(filepath.Join(dir, file.Name()), notifier, source, phase)
+	listener := NewFileListener(filepath.Join(dir, file.Name()), publisher, source, phase)
 	listener.Start()
 	defer func() {
 		listener.Finish()
-		notifier.AssertExpectations(t)
+		publisher.AssertExpectations(t)
 	}()
 
 	for _, line := range lines {
