@@ -14,7 +14,7 @@ var (
 )
 
 type Listener struct {
-	filename  string
+	Filename  string
 	publisher stream.Publisher
 	phase     string
 	stream    string
@@ -24,7 +24,7 @@ type Listener struct {
 
 func NewListener(filename string, publisher stream.Publisher, stream string, phase string) *Listener {
 	return &Listener{
-		filename:  filename,
+		Filename:  filename,
 		publisher: publisher,
 		phase:     phase,
 		stream:    stream,
@@ -47,9 +47,9 @@ func (l *Listener) readLoop() {
 
 	// file typically hasn't been created yet
 	// go ahead and create it and be ready to begin reading from it
-	file, err := os.OpenFile(l.filename, os.O_CREATE|os.O_RDONLY, 0644)
+	file, err := os.OpenFile(l.Filename, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
-		fileListenerLogger.Printf("unable to initialize file listener for file: %s", l.filename)
+		fileListenerLogger.Printf("unable to initialize file listener for file: %s", l.Filename)
 	}
 	defer file.Close()
 
