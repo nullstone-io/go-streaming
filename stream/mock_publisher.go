@@ -17,3 +17,7 @@ func (m *MockPublisher) PublishLogs(strm string, phase string, logs string) {
 func (m *MockPublisher) PublishObject(strm string, event EventType, object interface{}) {
 	m.MethodCalled("PublishObject", strm, event, object)
 }
+
+func (m *MockPublisher) PublishEot(strm string) {
+	m.MethodCalled("PublishEot", strm)
+}
