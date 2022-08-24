@@ -39,7 +39,7 @@ func TestFileListener(t *testing.T) {
 		publisher.On("PublishLogs", source, m.Context, m.Content)
 	}
 
-	listener := NewFileListener(filepath.Join(dir, file.Name()), publisher, source, phase)
+	listener := NewListener(filepath.Join(dir, file.Name()), publisher, source, phase)
 	listener.Start()
 	defer func() {
 		listener.Finish()

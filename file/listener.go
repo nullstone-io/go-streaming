@@ -13,7 +13,7 @@ var (
 	fileListenerLogger = log.New(os.Stderr, "[file-listener] ", 0)
 )
 
-type FileListener struct {
+type Listener struct {
 	filename  string
 	publisher stream.Publisher
 	phase     string
@@ -22,8 +22,8 @@ type FileListener struct {
 	done      chan bool // done is signaled when file listener has completed cleanup
 }
 
-func NewFileListener(filename string, publisher stream.Publisher, stream string, phase string) *FileListener {
-	return &FileListener{
+func NewListener(filename string, publisher stream.Publisher, stream string, phase string) *Listener {
+	return &Listener{
 		filename:  filename,
 		publisher: publisher,
 		phase:     phase,
@@ -33,16 +33,16 @@ func NewFileListener(filename string, publisher stream.Publisher, stream string,
 	}
 }
 
-func (l *FileListener) Start() {
+func (l *Listener) Start() {
 	go l.readLoop()
 }
 
-func (l *FileListener) Finish() {
+func (l *Listener) Finish() {
 	close(l.finish)
 	<-l.done
 }
 
-func (l *FileListener) readLoop() {
+func (l *Listener) readLoop() {
 	defer close(l.done)
 
 	// file typically hasn't been created yet
@@ -66,7 +66,7 @@ func (l *FileListener) readLoop() {
 	}
 }
 
-func (l *FileListener) readToEnd(file *os.File) {
+func (l *Listener) readToEnd(file *os.File) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		l.publisher.PublishLogs(l.stream, l.phase, fmt.Sprintf("%s\n", scanner.Text()))
