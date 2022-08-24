@@ -17,12 +17,12 @@ type Publisher struct {
 
 type contextKey struct{}
 
-func ContextWithPublisher(ctx context.Context, pub *Publisher) context.Context {
+func ContextWithPublisher(ctx context.Context, pub stream.Publisher) context.Context {
 	return context.WithValue(ctx, contextKey{}, pub)
 }
 
-func PublisherFromContext(ctx context.Context) *Publisher {
-	if val, ok := ctx.Value(contextKey{}).(*Publisher); ok {
+func PublisherFromContext(ctx context.Context) stream.Publisher {
+	if val, ok := ctx.Value(contextKey{}).(stream.Publisher); ok {
 		return val
 	}
 	return nil
