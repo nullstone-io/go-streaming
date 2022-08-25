@@ -4,11 +4,11 @@ import "context"
 
 type pubContextKey struct{}
 
-func ContextWithPub(ctx context.Context, pub Publisher) context.Context {
+func ContextWithPublisher(ctx context.Context, pub Publisher) context.Context {
 	return context.WithValue(ctx, pubContextKey{}, pub)
 }
 
-func PubFromContext(ctx context.Context) Publisher {
+func PublisherFromContext(ctx context.Context) Publisher {
 	val, _ := ctx.Value(pubContextKey{}).(Publisher)
 	return val
 }

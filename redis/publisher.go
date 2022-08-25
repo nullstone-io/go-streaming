@@ -15,19 +15,6 @@ type Publisher struct {
 	redisClient *redis.Client
 }
 
-type contextKey struct{}
-
-func ContextWithPublisher(ctx context.Context, pub *Publisher) context.Context {
-	return context.WithValue(ctx, contextKey{}, pub)
-}
-
-func PublisherFromContext(ctx context.Context) *Publisher {
-	if val, ok := ctx.Value(contextKey{}).(*Publisher); ok {
-		return val
-	}
-	return nil
-}
-
 func NewPublisher(redisClient *redis.Client) *Publisher {
 	return &Publisher{
 		redisClient: redisClient,
