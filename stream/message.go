@@ -15,9 +15,8 @@ const (
 )
 
 type Message struct {
-	Context string    `json:"context"`
-	Type    EventType `json:"type"`
-	Content string    `json:"content"`
+	Context string `json:"context"`
+	Content string `json:"content"`
 }
 
 func (m *Message) ToMap() map[string]interface{} {
