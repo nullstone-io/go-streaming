@@ -7,7 +7,7 @@ import (
 	"github.com/nullstone-io/go-streaming/stream"
 )
 
-func Endpoint(w *json.ResponseWriter, r *json.Request, fn func(ctx context.Context, msgs <-chan stream.Message, errs <-chan error)) {
+func Endpoint(w *json.ResponseWriter, r *json.Request, fn func(ctx context.Context, msgs chan<- stream.Message, errs chan<- error)) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	msgs := make(chan stream.Message)
