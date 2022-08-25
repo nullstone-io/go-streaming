@@ -26,3 +26,10 @@ func (m *Message) ToMap() map[string]interface{} {
 	_ = json.Unmarshal(serialized, &result)
 	return result
 }
+
+func EotMessage() Message {
+	return Message{
+		Context: "eot",
+		Content: EndOfTransmission,
+	}
+}
