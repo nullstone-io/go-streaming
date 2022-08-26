@@ -3,7 +3,7 @@ package file
 import (
 	"bufio"
 	"fmt"
-	"github.com/nullstone-io/go-streaming/stream"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -14,22 +14,18 @@ var (
 )
 
 type Listener struct {
-	Filename  string
-	publisher stream.Publisher
-	phase     string
-	stream    string
-	finish    chan bool // finish is signaled when the file listener should close
-	done      chan bool // done is signaled when file listener has completed cleanup
+	Filename string
+	writer   io.Writer
+	finish   chan bool // finish is signaled when the file listener should close
+	done     chan bool // done is signaled when file listener has completed cleanup
 }
 
-func NewListener(filename string, publisher stream.Publisher, stream string, phase string) *Listener {
+func NewListener(filename string, writer io.Writer) *Listener {
 	return &Listener{
-		Filename:  filename,
-		publisher: publisher,
-		phase:     phase,
-		stream:    stream,
-		finish:    make(chan bool),
-		done:      make(chan bool),
+		Filename: filename,
+		writer:   writer,
+		finish:   make(chan bool),
+		done:     make(chan bool),
 	}
 }
 
@@ -69,7 +65,7 @@ func (l *Listener) readLoop() {
 func (l *Listener) readToEnd(file *os.File) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		l.publisher.PublishLogs(l.stream, l.phase, fmt.Sprintf("%s\n", scanner.Text()))
+		l.writer.Write([]byte(fmt.Sprintf("%s\n", scanner.Text())))
 	}
 
 	if err := scanner.Err(); err != nil {

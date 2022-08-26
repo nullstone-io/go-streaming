@@ -10,12 +10,12 @@ type MockPublisher struct {
 	mock.Mock
 }
 
-func (m *MockPublisher) PublishLogs(strm string, phase string, logs string) {
-	m.MethodCalled("PublishLogs", strm, phase, logs)
+func (m *MockPublisher) PublishLogs(strm string, id *int64, phase string, logs string) {
+	m.MethodCalled("PublishLogs", strm, id, phase, logs)
 }
 
-func (m *MockPublisher) PublishObject(strm string, event EventType, object interface{}) {
-	m.MethodCalled("PublishObject", strm, event, object)
+func (m *MockPublisher) PublishObject(strm string, id *int64, event EventType, object interface{}) {
+	m.MethodCalled("PublishObject", strm, id, event, object)
 }
 
 func (m *MockPublisher) PublishEot(strm string) {

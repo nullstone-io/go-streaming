@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/nullstone-io/go-streaming/stream"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -22,7 +23,7 @@ func TestFileListener(t *testing.T) {
 	stackId := 5
 	uid, err := uuid.NewUUID()
 	require.NoError(t, err)
-	source := fmt.Sprintf("%s:%d:%s", orgName, stackId, uid.String())
+	streamName := fmt.Sprintf("%s:%d:%s", orgName, stackId, uid.String())
 	phase := "plan"
 
 	lines := []string{"Initializing...\n", "Fetching module\n", "Done\n"}
@@ -36,10 +37,15 @@ func TestFileListener(t *testing.T) {
 
 	var publisher = new(stream.MockPublisher)
 	for _, m := range expectedMessages {
-		publisher.On("PublishLogs", source, m.Context, m.Content)
+		publisher.On("PublishLogs", streamName, mock.Anything, m.Context, m.Content)
+	}
+	writer := &MockWriter{
+		StreamName: streamName,
+		Phase:      phase,
+		Publisher:  publisher,
 	}
 
-	listener := NewListener(filepath.Join(dir, file.Name()), publisher, source, phase)
+	listener := NewListener(filepath.Join(dir, file.Name()), writer)
 	listener.Start()
 	defer func() {
 		listener.Finish()

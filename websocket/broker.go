@@ -47,7 +47,10 @@ func (b *Broker) writeLoop() {
 
 		for {
 			select {
-			case message := <-b.messages:
+			case message, ok := <-b.messages:
+				if !ok {
+					return
+				}
 				hasEot := strings.HasSuffix(message.Content, stream.EndOfTransmission)
 				message.Content = strings.TrimSuffix(message.Content, stream.EndOfTransmission)
 				if len(message.Content) > 0 {
@@ -57,7 +60,10 @@ func (b *Broker) writeLoop() {
 					closeData := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "end of transmission")
 					b.conn.WriteMessage(websocket.CloseMessage, closeData)
 				}
-			case err := <-b.errors:
+			case err, ok := <-b.errors:
+				if !ok {
+					return
+				}
 				closeData := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, err.Error())
 				b.conn.WriteMessage(websocket.CloseMessage, closeData)
 
