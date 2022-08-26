@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
 	"log"
@@ -21,15 +22,15 @@ func NewPublisher(redisClient *redis.Client) *Publisher {
 	}
 }
 
-func (p *Publisher) PublishLogs(strm string, phase string, logs string) {
+func (p *Publisher) PublishLogs(strm string, id int64, phase string, logs string) {
 	m := stream.Message{
 		Context: phase,
 		Content: logs,
 	}
-	p.publish(strm, m)
+	p.publish(strm, id, m)
 }
 
-func (p *Publisher) PublishObject(strm string, event stream.EventType, object interface{}) {
+func (p *Publisher) PublishObject(strm string, id int64, event stream.EventType, object interface{}) {
 	data, err := json.Marshal(object)
 	if err != nil {
 		log.Printf("error marshalling message content: %v", err)
@@ -38,19 +39,20 @@ func (p *Publisher) PublishObject(strm string, event stream.EventType, object in
 		Context: string(event),
 		Content: string(data),
 	}
-	p.publish(strm, m)
+	p.publish(strm, id, m)
 }
 
-func (p *Publisher) PublishEot(strm string) {
+func (p *Publisher) PublishEot(strm string, id int64) {
 	m := stream.Message{
 		Context: "eot",
 		Content: stream.EndOfTransmission,
 	}
-	p.publish(strm, m)
+	p.publish(strm, id, m)
 }
 
-func (p *Publisher) publish(strm string, message stream.Message) {
+func (p *Publisher) publish(strm string, id int64, message stream.Message) {
 	args := redis.XAddArgs{
+		ID:     fmt.Sprintf("%d-*", id),
 		Stream: strm,
 		Values: message.ToMap(),
 	}
