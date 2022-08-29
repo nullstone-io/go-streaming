@@ -14,7 +14,7 @@ func PublisherFromContext(ctx context.Context) Publisher {
 }
 
 type Publisher interface {
-	PublishLogs(stream string, id *int64, phase string, logs string)
-	PublishObject(stream string, id *int64, event EventType, object interface{})
+	PublishLogs(stream string, id *int, phase string, logs string)
+	PublishObject(stream string, id *int, event EventType, object interface{})
 	PublishEot(stream string)
 }

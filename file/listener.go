@@ -65,7 +65,10 @@ func (l *Listener) readLoop() {
 func (l *Listener) readToEnd(file *os.File) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		l.writer.Write([]byte(fmt.Sprintf("%s\n", scanner.Text())))
+		_, err := l.writer.Write([]byte(fmt.Sprintf("%s\n", scanner.Text())))
+		if err != nil {
+			fileListenerLogger.Printf("error writing logs: %s", err)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {

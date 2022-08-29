@@ -22,7 +22,7 @@ func NewPublisher(redisClient *redis.Client) *Publisher {
 	}
 }
 
-func (p *Publisher) PublishLogs(strm string, id *int64, phase string, logs string) {
+func (p *Publisher) PublishLogs(strm string, id *int, phase string, logs string) {
 	m := stream.Message{
 		Context: phase,
 		Content: logs,
@@ -30,7 +30,7 @@ func (p *Publisher) PublishLogs(strm string, id *int64, phase string, logs strin
 	p.publish(strm, id, m)
 }
 
-func (p *Publisher) PublishObject(strm string, id *int64, event stream.EventType, object interface{}) {
+func (p *Publisher) PublishObject(strm string, id *int, event stream.EventType, object interface{}) {
 	data, err := json.Marshal(object)
 	if err != nil {
 		log.Printf("error marshalling message content: %v", err)
@@ -50,7 +50,7 @@ func (p *Publisher) PublishEot(strm string) {
 	p.publish(strm, nil, m)
 }
 
-func (p *Publisher) publish(strm string, id *int64, message stream.Message) {
+func (p *Publisher) publish(strm string, id *int, message stream.Message) {
 	args := redis.XAddArgs{
 		ID:     fmt.Sprintf("%d-*", id),
 		Stream: strm,
