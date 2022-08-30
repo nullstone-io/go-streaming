@@ -51,9 +51,15 @@ func (p *Publisher) PublishEot(strm string) {
 }
 
 func (p *Publisher) publish(strm string, id *int, message stream.Message) {
+	var idArg string
+	if id != nil {
+		idArg = fmt.Sprintf("%d", *id)
+	} else {
+		idArg = "*"
+	}
 	args := redis.XAddArgs{
 		Stream: strm,
-		ID:     fmt.Sprintf("%d", *id),
+		ID:     idArg,
 		Values: message.ToMap(),
 	}
 	ctx := context.Background()
