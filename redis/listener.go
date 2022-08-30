@@ -26,14 +26,17 @@ func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) 
 	}
 }
 
-func (r *Listener) Listen(ctx context.Context, cursor *string) error {
-	if cursor == nil {
-		*cursor = "$" // the special $ id will return only items added after we block on XREAD
+func (r *Listener) Listen(ctx context.Context, c *string) error {
+	var cursor string
+	if c == nil {
+		cursor = "$" // the special $ id will return only items added after we block on XREAD
+	} else {
+		cursor = *c
 	}
 
 	for {
 		args := redis.XReadArgs{
-			Streams: []string{r.streamName, *cursor},
+			Streams: []string{r.streamName, cursor},
 			Block:   0,
 		}
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
@@ -51,7 +54,7 @@ func (r *Listener) Listen(ctx context.Context, cursor *string) error {
 					Content: msg.Values["content"].(string),
 				}
 				r.adapter.Send(m)
-				*cursor = msg.ID
+				cursor = msg.ID
 			}
 		}
 		r.adapter.Flush()
