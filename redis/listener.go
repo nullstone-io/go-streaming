@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
+	"time"
 )
 
 type Adapter interface {
@@ -29,9 +30,19 @@ func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) 
 func (r *Listener) Listen(ctx context.Context, c *string) error {
 	var cursor string
 	if c == nil {
-		cursor = "1" // the special $ id will return only items added after we block on XREAD
+		cursor = "1"
 	} else {
 		cursor = *c
+	}
+
+	// since we are no longer able to use the special $ id,
+	// we have to wait for the stream to be created before we can start listening
+	for {
+		result := r.redisClient.Exists(ctx, r.streamName)
+		if result.Val() == 1 {
+			break
+		}
+		time.Sleep(time.Second)
 	}
 
 	for {
