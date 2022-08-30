@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
-	"time"
+	"log"
 )
 
 type Adapter interface {
@@ -27,24 +27,24 @@ func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) 
 	}
 }
 
-func (r *Listener) Listen(ctx context.Context, c *string) error {
-	var cursor string
-	if c == nil {
-		cursor = "1"
-	} else {
-		cursor = *c
+func (r *Listener) Listen(ctx context.Context, cursor string) error {
+	if cursor == "-1" {
+		cursor = "$"
 	}
 
 	// since we are no longer able to use the special $ id,
 	// we have to wait for the stream to be created before we can start listening
-	for {
-		result := r.redisClient.Exists(ctx, r.streamName)
-		if result.Val() == 1 {
-			break
+	/*
+		for {
+			result := r.redisClient.Exists(ctx, r.streamName)
+			if result.Val() == 1 {
+				break
+			}
+			time.Sleep(time.Second)
 		}
-		time.Sleep(time.Second)
-	}
+	*/
 
+	log.Printf("start listening to stream %s, id %s", r.streamName, cursor)
 	for {
 		args := redis.XReadArgs{
 			Streams: []string{r.streamName, cursor},
