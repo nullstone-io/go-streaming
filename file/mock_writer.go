@@ -18,6 +18,6 @@ func (m *MockWriter) Write(p []byte) (n int, err error) {
 		Context: m.Phase,
 		Content: string(p),
 	}
-	m.Publisher.PublishLogs(m.StreamName, nil, message.Context, message.Content)
+	m.Publisher.PublishLogs(m.StreamName, -1, message.Context, message.Content)
 	return 0, nil
 }

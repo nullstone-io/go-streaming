@@ -29,7 +29,7 @@ func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) 
 func (r *Listener) Listen(ctx context.Context, c *string) error {
 	var cursor string
 	if c == nil {
-		cursor = "$" // the special $ id will return only items added after we block on XREAD
+		cursor = "1" // the special $ id will return only items added after we block on XREAD
 	} else {
 		cursor = *c
 	}
