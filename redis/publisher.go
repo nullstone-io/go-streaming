@@ -53,15 +53,14 @@ func (p *Publisher) PublishEot(strm string) {
 func (p *Publisher) publish(strm string, id *int, message stream.Message) {
 	args := redis.XAddArgs{
 		Stream: strm,
-		ID:     fmt.Sprintf("%d", id),
+		ID:     fmt.Sprintf("%d", &id),
 		Values: message.ToMap(),
 	}
-	log.Printf("publishing message: %v", args)
 	ctx := context.Background()
 
-	err := p.redisClient.XAdd(ctx, &args)
-	if err != nil {
-		log.Printf("error publishing message: %v", err)
+	result := p.redisClient.XAdd(ctx, &args)
+	if result.Err() != nil {
+		log.Printf("error publishing message: %v", result.Err())
 	}
 	// with every new log that we publish, reset the expiry on the redis stream
 	// the stream will automatically be removed in redis an hour after the final activity
