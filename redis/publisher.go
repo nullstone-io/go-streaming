@@ -53,7 +53,7 @@ func (p *Publisher) PublishEot(strm string) {
 func (p *Publisher) publish(strm string, id *int, message stream.Message) {
 	args := redis.XAddArgs{
 		Stream: strm,
-		ID:     fmt.Sprintf("%d", &id),
+		ID:     fmt.Sprintf("%d-1", &id),
 		Values: message.ToMap(),
 	}
 	ctx := context.Background()
