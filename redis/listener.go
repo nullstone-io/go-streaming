@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
-	"time"
 )
 
 type Adapter interface {
@@ -28,6 +27,8 @@ func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) 
 }
 
 func (r *Listener) Listen(ctx context.Context, cursor string) error {
+	defer r.adapter.Flush()
+
 	if cursor == "-1" {
 		cursor = "$" // the special id $ allows us to start streaming from this point in time, even if the stream doesn't exist yet
 	}
@@ -55,7 +56,5 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 				cursor = msg.ID
 			}
 		}
-		time.Sleep(time.Second)
-		r.adapter.Flush()
 	}
 }
