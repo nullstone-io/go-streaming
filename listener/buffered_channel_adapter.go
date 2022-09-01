@@ -29,7 +29,7 @@ func NewBufferedChannelAdapter(messages chan<- stream.Message) *BufferedChannelA
 		done:   make(chan bool),
 	}
 
-	go adapter.flushTicker()
+	go adapter.waitForTick()
 
 	return &adapter
 }
@@ -73,7 +73,7 @@ func (l *BufferedChannelAdapter) Flush() {
 	l.msgs <- m
 }
 
-func (l *BufferedChannelAdapter) flushTicker() {
+func (l *BufferedChannelAdapter) waitForTick() {
 	for {
 		select {
 		case <-l.done:
