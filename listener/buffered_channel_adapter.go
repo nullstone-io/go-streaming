@@ -3,7 +3,6 @@ package listener
 import (
 	"bytes"
 	"github.com/nullstone-io/go-streaming/stream"
-	"strings"
 )
 
 const (
@@ -31,16 +30,10 @@ func (l *BufferedChannelAdapter) Send(message stream.Message) {
 	}
 	l.currentPhase = message.Context
 
-	hasEot := strings.Contains(message.Content, stream.EndOfTransmission)
-	l.buffer.WriteString(strings.TrimSuffix(message.Content, stream.EndOfTransmission))
+	l.buffer.WriteString(message.Content)
 
 	// If we have exceeded the min buffer length, flush the content to the stream
 	if l.buffer.Len() > maxBufferLength {
-		l.Flush()
-	}
-
-	if hasEot {
-		l.buffer.WriteString(stream.EndOfTransmission)
 		l.Flush()
 	}
 }
