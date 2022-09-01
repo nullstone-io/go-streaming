@@ -86,5 +86,6 @@ func (l *BufferedChannelAdapter) waitForTick() {
 }
 
 func (l *BufferedChannelAdapter) Close() {
+	l.Flush()
 	close(l.done)
 }
