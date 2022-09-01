@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
+	"time"
 )
 
 type Adapter interface {
@@ -54,6 +55,7 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 				cursor = msg.ID
 			}
 		}
+		time.Sleep(time.Second)
 		r.adapter.Flush()
 	}
 }
