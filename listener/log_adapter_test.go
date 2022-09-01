@@ -105,6 +105,7 @@ func TestBufferedChannelAdapter(t *testing.T) {
 			go func() {
 				defer close(messages)
 				adapter := NewBufferedChannelAdapter(messages)
+				defer adapter.Close()
 				for _, msg := range test.msgs {
 					adapter.Send(msg)
 				}
