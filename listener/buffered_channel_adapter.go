@@ -31,15 +31,16 @@ func (l *BufferedChannelAdapter) Send(message stream.Message) {
 	}
 	l.currentPhase = message.Context
 
-	l.buffer.WriteString(message.Content)
-
-	// If an EOT message is received, go ahead and flush the buffer because we won't get another message
-	if strings.HasSuffix(message.Content, stream.EndOfTransmission) {
-		l.Flush()
-	}
+	hasEot := strings.Contains(message.Content, stream.EndOfTransmission)
+	l.buffer.WriteString(strings.TrimSuffix(message.Content, stream.EndOfTransmission))
 
 	// If we have exceeded the min buffer length, flush the content to the stream
 	if l.buffer.Len() > maxBufferLength {
+		l.Flush()
+	}
+
+	if hasEot {
+		l.buffer.WriteString(stream.EndOfTransmission)
 		l.Flush()
 	}
 }
