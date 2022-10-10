@@ -5,7 +5,6 @@ import (
 	"github.com/BSick7/go-api/json"
 	"github.com/gorilla/websocket"
 	"github.com/nullstone-io/go-streaming/stream"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -87,13 +86,14 @@ func (b *Broker) readLoop() {
 	// we will simply log the "error" and end the function (causing everything to clean up)
 	for {
 		msgType, msg, err := b.conn.ReadMessage()
-		log.Printf("[WEBSOCKET MESSAGE] %d:%s", msgType, msg)
 		if msgType == websocket.CloseMessage || err != nil {
 			return
 		}
 		// respond to ping messages so the client knows we're still alive
+		// the @vueuse/useWebSocket library forces us to send the pong as a text message
+		// normally we would send a message with type PongMessage
+		// even though this is a pong message, the spec says to respond with the same contents as the ping
 		if msgType == websocket.PingMessage || string(msg) == PingMessage {
-			log.Printf("[WEBSOCKET PING] %s, writing PONG", msg)
 			b.conn.WriteMessage(websocket.TextMessage, msg)
 		}
 	}
