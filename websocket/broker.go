@@ -84,6 +84,10 @@ func (b *Broker) readLoop() {
 		if msgType == websocket.CloseMessage || err != nil {
 			return
 		}
+		// respond to ping messages so the client knows we're still alive
+		if msgType == websocket.PingMessage {
+			b.conn.WriteMessage(websocket.PongMessage, []byte{})
+		}
 	}
 }
 
