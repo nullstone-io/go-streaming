@@ -5,6 +5,7 @@ import (
 	"github.com/BSick7/go-api/json"
 	"github.com/gorilla/websocket"
 	"github.com/nullstone-io/go-streaming/stream"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -86,6 +87,7 @@ func (b *Broker) readLoop() {
 	// we will simply log the "error" and end the function (causing everything to clean up)
 	for {
 		msgType, msg, err := b.conn.ReadMessage()
+		log.Printf("[WEBSOCKET MESSAGE] %d:%s", msgType, msg)
 		if msgType == websocket.CloseMessage || err != nil {
 			return
 		}
