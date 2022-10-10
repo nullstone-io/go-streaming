@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+const (
+	PingMessage = "ping"
+	PongMessage = "pong"
+)
+
 type Broker struct {
 	conn     *websocket.Conn
 	messages <-chan stream.Message
@@ -80,13 +85,13 @@ func (b *Broker) readLoop() {
 	// a clean disconnect from the client will cause ReadMessage to return an error
 	// we will simply log the "error" and end the function (causing everything to clean up)
 	for {
-		msgType, _, err := b.conn.ReadMessage()
+		msgType, msg, err := b.conn.ReadMessage()
 		if msgType == websocket.CloseMessage || err != nil {
 			return
 		}
 		// respond to ping messages so the client knows we're still alive
-		if msgType == websocket.PingMessage {
-			b.conn.WriteMessage(websocket.PongMessage, []byte{})
+		if msgType == websocket.PingMessage || string(msg) == PingMessage {
+			b.conn.WriteMessage(websocket.PongMessage, []byte(PongMessage))
 		}
 	}
 }
