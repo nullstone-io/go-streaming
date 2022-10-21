@@ -47,36 +47,34 @@ func StartBroker(w *json.ResponseWriter, r *json.Request, msgs <-chan stream.Mes
 }
 
 func (b *Broker) writeLoop() {
-	go func() {
-		defer b.conn.Close()
+	defer b.conn.Close()
 
-		for {
-			select {
-			case message, ok := <-b.messages:
-				if !ok {
-					return
-				}
-				hasEot := strings.HasSuffix(message.Content, stream.EndOfTransmission)
-				message.Content = strings.TrimSuffix(message.Content, stream.EndOfTransmission)
-				if len(message.Content) > 0 {
-					b.conn.WriteJSON(message)
-				}
-				if hasEot {
-					closeData := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "end of transmission")
-					b.conn.WriteMessage(websocket.CloseMessage, closeData)
-				}
-			case err, ok := <-b.errors:
-				if !ok {
-					return
-				}
-				closeData := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, err.Error())
-				b.conn.WriteMessage(websocket.CloseMessage, closeData)
-
-			case <-b.done:
+	for {
+		select {
+		case message, ok := <-b.messages:
+			if !ok {
 				return
 			}
+			hasEot := strings.HasSuffix(message.Content, stream.EndOfTransmission)
+			message.Content = strings.TrimSuffix(message.Content, stream.EndOfTransmission)
+			if len(message.Content) > 0 {
+				b.conn.WriteJSON(message)
+			}
+			if hasEot {
+				closeData := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "end of transmission")
+				b.conn.WriteMessage(websocket.CloseMessage, closeData)
+			}
+		case err, ok := <-b.errors:
+			if !ok {
+				return
+			}
+			closeData := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, err.Error())
+			b.conn.WriteMessage(websocket.CloseMessage, closeData)
+
+		case <-b.done:
+			return
 		}
-	}()
+	}
 }
 
 func (b *Broker) readLoop() {
