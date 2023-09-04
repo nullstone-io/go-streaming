@@ -12,6 +12,7 @@ func NewClient(redisUrl string) (*redis.Client, error) {
 		return nil, fmt.Errorf("no redis url provided")
 	}
 	options, err := redis.ParseURL(redisUrl)
+	options.PoolSize = 1000
 	if err != nil {
 		return nil, fmt.Errorf("invalid redis URL: %w", err)
 	}
