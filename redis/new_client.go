@@ -7,13 +7,16 @@ import (
 	"log"
 )
 
-func NewClient(redisUrl string) (*redis.Client, error) {
+func NewClient(redisUrl string, poolSize *int) (*redis.Client, error) {
 	if redisUrl == "" {
 		return nil, fmt.Errorf("no redis url provided")
 	}
 	options, err := redis.ParseURL(redisUrl)
 	if err != nil {
 		return nil, fmt.Errorf("invalid redis URL: %w", err)
+	}
+	if poolSize != nil {
+		options.PoolSize = *poolSize
 	}
 	client := redis.NewClient(options)
 	ctx := context.Background()
