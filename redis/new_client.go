@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func NewClient(redisUrl string, poolSize *int) (*redis.Client, error) {
+func NewClient(redisUrl string, poolSize int) (*redis.Client, error) {
 	if redisUrl == "" {
 		return nil, fmt.Errorf("no redis url provided")
 	}
@@ -15,8 +15,8 @@ func NewClient(redisUrl string, poolSize *int) (*redis.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid redis URL: %w", err)
 	}
-	if poolSize != nil {
-		options.PoolSize = *poolSize
+	if poolSize > 0 {
+		options.PoolSize = poolSize
 	}
 	client := redis.NewClient(options)
 	ctx := context.Background()
