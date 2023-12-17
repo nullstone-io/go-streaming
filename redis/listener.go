@@ -5,12 +5,15 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
+	"time"
 )
 
 type Adapter interface {
 	Send(message stream.Message)
 	Flush()
 }
+
+const dur = 1 * time.Second
 
 type Listener struct {
 	streamName  string
@@ -34,7 +37,6 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 	for {
 		args := redis.XReadArgs{
 			Streams: []string{r.streamName, cursor},
-			Block:   0,
 		}
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
 		if err != nil {
@@ -53,6 +55,11 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 				r.adapter.Send(m)
 				cursor = msg.ID
 			}
+		}
+		select {
+		// wait for 1 second between each query to redis
+		// we do this instead of making the XRead call block so we don't hold open a connection to redis
+		case <-time.After(dur):
 		}
 	}
 }
