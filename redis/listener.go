@@ -38,6 +38,7 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 	for {
 		args := redis.XReadArgs{
 			Streams: []string{r.streamName, cursor},
+			Block:   100 * time.Millisecond,
 		}
 		log.Printf("Reading from stream %s with cursor %s\n", r.streamName, cursor)
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
