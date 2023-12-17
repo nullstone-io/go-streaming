@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
+	"log"
 	"time"
 )
 
@@ -38,6 +39,7 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		args := redis.XReadArgs{
 			Streams: []string{r.streamName, cursor},
 		}
+		log.Printf("Reading from stream %s with cursor %s\n", r.streamName, cursor)
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
