@@ -42,6 +42,8 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		}
 		log.Printf("Reading from stream %s with cursor %s\n", r.streamName, cursor)
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
+		log.Printf("groups: %+v\n", groups)
+		log.Printf("err: %+v\n", err)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return nil
