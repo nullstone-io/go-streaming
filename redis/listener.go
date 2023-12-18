@@ -48,6 +48,10 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return nil
+			} else if errors.Is(err, redis.Nil) {
+				// we get this error when no results are returned
+				// not exactly sure why but we want to continue listening
+				continue
 			} else {
 				return err
 			}
