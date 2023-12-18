@@ -15,7 +15,7 @@ type Adapter interface {
 	Flush()
 }
 
-const dur = 3 * time.Second
+const dur = 1 * time.Second
 
 type Listener struct {
 	streamName  string
