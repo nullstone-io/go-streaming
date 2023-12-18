@@ -14,7 +14,7 @@ type Adapter interface {
 	Flush()
 }
 
-const dur = 1 * time.Second
+const waitDuration = 1 * time.Second
 
 type Listener struct {
 	streamName  string
@@ -68,7 +68,7 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		select {
 		// wait for a set period between each query to redis to not overload it
 		// we do this instead of making the XRead call block so we don't hold open a connection to redis
-		case <-time.After(dur):
+		case <-time.After(waitDuration):
 		case <-ctx.Done():
 			return nil
 		}
