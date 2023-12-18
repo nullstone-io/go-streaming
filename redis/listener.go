@@ -43,6 +43,7 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
 		log.Printf("groups: %+v\n", groups)
 		log.Printf("err: %+v\n", err)
+		log.Printf("%T\n", err)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return nil
