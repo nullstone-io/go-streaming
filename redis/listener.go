@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
-	"log"
 	"time"
 )
 
@@ -14,7 +13,7 @@ type Adapter interface {
 	Flush()
 }
 
-const dur = 1 * time.Second
+const dur = 3 * time.Second
 
 type Listener struct {
 	streamName  string
@@ -40,11 +39,11 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 			Streams: []string{r.streamName, cursor},
 			Block:   100 * time.Millisecond,
 		}
-		log.Printf("Reading from stream %s with cursor %s\n", r.streamName, cursor)
+		// log.Printf("Reading from stream %s with cursor %s\n", r.streamName, cursor)
 		groups, err := r.redisClient.XRead(ctx, &args).Result()
-		log.Printf("groups: %+v\n", groups)
-		log.Printf("err: %+v\n", err)
-		log.Printf("%T\n", err)
+		// log.Printf("groups: %+v\n", groups)
+		// log.Printf("err: %+v\n", err)
+		// log.Printf("%T\n", err)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return nil
@@ -69,7 +68,7 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		// we do this instead of making the XRead call block so we don't hold open a connection to redis
 		case <-time.After(dur):
 		case <-ctx.Done():
-			log.Printf("context cancelled\n")
+			// log.Printf("context cancelled\n")
 			return nil
 		}
 	}
