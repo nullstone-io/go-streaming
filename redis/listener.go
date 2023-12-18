@@ -3,8 +3,10 @@ package redis
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
+	"log"
 	"time"
 )
 
@@ -31,7 +33,8 @@ func NewListener(redisClient *redis.Client, streamName string, adapter Adapter) 
 
 func (r *Listener) Listen(ctx context.Context, cursor string) error {
 	if cursor == "-1" {
-		cursor = "$" // the special id $ allows us to start streaming from this point in time, even if the stream doesn't exist yet
+		cursor = fmt.Sprintf("%d", time.Now().UnixMilli())
+		log.Printf("Setting cursor to %s\n", cursor)
 	}
 
 	for {
@@ -50,21 +53,26 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 			} else if !errors.Is(err, redis.Nil) {
 				// when no results are found, this lib returns a redis.Nil error
 				// not exactly sure why but we want to continue listening
+				// only return an error here if it's not a redis.Nil error
 				return err
 			}
-		}
-		for _, grp := range groups {
-			for _, msg := range grp.Messages {
-				m := stream.Message{
-					Context: msg.Values["context"].(string),
-					Content: msg.Values["content"].(string),
+		} else {
+			for _, grp := range groups {
+				for _, msg := range grp.Messages {
+					m := stream.Message{
+						Context: msg.Values["context"].(string),
+						Content: msg.Values["content"].(string),
+					}
+					r.adapter.Send(m)
+					cursor = msg.ID
 				}
-				r.adapter.Send(m)
-				cursor = msg.ID
 			}
+			// if we got results back, we don't want to wait for the timeout below
+			// instead, loop back and query redis again immediately
+			continue
 		}
 		select {
-		// wait for 1 second between each query to redis
+		// wait for a set period between each query to redis to not overload it
 		// we do this instead of making the XRead call block so we don't hold open a connection to redis
 		case <-time.After(dur):
 		case <-ctx.Done():
