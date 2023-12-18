@@ -68,6 +68,9 @@ func (r *Listener) Listen(ctx context.Context, cursor string) error {
 		// wait for 1 second between each query to redis
 		// we do this instead of making the XRead call block so we don't hold open a connection to redis
 		case <-time.After(dur):
+		case <-ctx.Done():
+			log.Printf("context cancelled\n")
+			return nil
 		}
 	}
 }
