@@ -18,7 +18,7 @@ type Message struct {
 	Type    string         `json:"type"`
 	Context string         `json:"context"`
 	Content string         `json:"content"`
-	Extra   map[string]any `json:"extra,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 func (m *Message) ToMap() map[string]interface{} {
