@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func NewClient(ctx context.Context, redisUrl string, poolSize int) (*redis.Client, error) {
+func NewClient(ctx context.Context, redisUrl string, poolSize int, enableOtel bool) (*redis.Client, error) {
 	if redisUrl == "" {
 		return nil, fmt.Errorf("no redis url provided")
 	}
@@ -21,11 +21,14 @@ func NewClient(ctx context.Context, redisUrl string, poolSize int) (*redis.Clien
 	}
 
 	client := redis.NewClient(options)
-	if err := redisotel.InstrumentTracing(client); err != nil {
-		log.Printf("unable to instrument redis with tracing: %s\n", err)
-	}
-	if err := redisotel.InstrumentMetrics(client); err != nil {
-		log.Printf("unable to instrument redis with metrics: %s\n", err)
+
+	if enableOtel {
+		if err := redisotel.InstrumentTracing(client); err != nil {
+			log.Printf("unable to instrument redis with tracing: %s\n", err)
+		}
+		if err := redisotel.InstrumentMetrics(client); err != nil {
+			log.Printf("unable to instrument redis with metrics: %s\n", err)
+		}
 	}
 
 	pong, err := client.Ping(ctx).Result()
