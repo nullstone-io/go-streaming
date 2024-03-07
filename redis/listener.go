@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"github.com/nullstone-io/go-streaming/stream"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
