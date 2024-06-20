@@ -12,6 +12,7 @@ import (
 type Adapter interface {
 	Send(message stream.Message)
 	Flush()
+	Close()
 }
 
 const waitDuration = 1 * time.Second
