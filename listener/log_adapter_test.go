@@ -100,22 +100,19 @@ func TestBufferedChannelAdapter(t *testing.T) {
 			defer cancel()
 
 			gotMsgs := make([]stream.Message, 0)
-			messages := make(chan stream.Message)
+			adapter := NewBufferedChannelAdapter()
 
 			go func() {
-				defer close(messages)
-				adapter := NewBufferedChannelAdapter(messages)
 				defer adapter.Close()
 				for _, msg := range test.msgs {
 					adapter.Send(msg)
 				}
-				adapter.Flush()
 			}()
 
 			func() {
 				for {
 					select {
-					case message, ok := <-messages:
+					case message, ok := <-adapter.Channel():
 						if !ok {
 							return
 						}

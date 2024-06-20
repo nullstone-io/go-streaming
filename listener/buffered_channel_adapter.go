@@ -13,79 +13,85 @@ const (
 )
 
 type BufferedChannelAdapter struct {
-	msgs         chan<- stream.Message
+	messages     chan stream.Message
 	buffer       *bytes.Buffer
 	currentPhase string
 	ticker       *time.Ticker
 	mu           sync.Mutex
-	done         chan bool
+	closed       bool
 }
 
-func NewBufferedChannelAdapter(messages chan<- stream.Message) *BufferedChannelAdapter {
+func NewBufferedChannelAdapter() *BufferedChannelAdapter {
 	adapter := BufferedChannelAdapter{
-		msgs:   messages,
-		buffer: bytes.NewBufferString(""),
-		ticker: time.NewTicker(bufferTimeout),
-		done:   make(chan bool),
+		messages: make(chan stream.Message),
+		buffer:   bytes.NewBufferString(""),
+		ticker:   time.NewTicker(bufferTimeout),
 	}
 
-	go adapter.waitForTick()
+	go adapter.flushOnTick()
 
 	return &adapter
 }
 
-func (l *BufferedChannelAdapter) Send(message stream.Message) {
+func (a *BufferedChannelAdapter) Channel() <-chan stream.Message {
+	return a.messages
+}
+
+func (a *BufferedChannelAdapter) Send(message stream.Message) {
 	// First check to see if this message belongs to a different workflow phase
 	// If it does, flush all previous messages
 
-	if l.currentPhase != "" && l.currentPhase != message.Context {
-		l.Flush()
+	if a.currentPhase != "" && a.currentPhase != message.Context {
+		a.Flush()
 	}
-	l.currentPhase = message.Context
+	a.currentPhase = message.Context
 
-	l.buffer.WriteString(message.Content)
+	a.buffer.WriteString(message.Content)
 
 	// If we have exceeded the min buffer length, flush the content to the stream
-	if l.buffer.Len() > maxBufferLength {
-		l.Flush()
+	if a.buffer.Len() > maxBufferLength {
+		a.Flush()
 	}
 }
 
-func (l *BufferedChannelAdapter) Flush() {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+func (a *BufferedChannelAdapter) Flush() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.closed {
+		return
+	}
 
-	l.ticker.Reset(bufferTimeout)
+	a.ticker.Reset(bufferTimeout)
 
 	// Do not send a message if there is no buffered content
-	if l.buffer.Len() <= 0 {
+	if a.buffer.Len() <= 0 {
 		return
 	}
 
 	// Dump the buffered content into a message
 	// Reset the buffer before emitting to the stream
 	m := stream.Message{
-		Context: l.currentPhase,
-		Content: l.buffer.String(),
+		Context: a.currentPhase,
+		Content: a.buffer.String(),
 	}
-	l.buffer.Reset()
+	a.buffer.Reset()
 
-	l.msgs <- m
+	a.messages <- m
 }
 
-func (l *BufferedChannelAdapter) waitForTick() {
-	for {
-		select {
-		case <-l.done:
-			l.ticker.Stop()
-			return
-		case <-l.ticker.C:
-			l.Flush()
-		}
+func (a *BufferedChannelAdapter) flushOnTick() {
+	for range a.ticker.C {
+		a.Flush()
 	}
 }
 
-func (l *BufferedChannelAdapter) Close() {
-	l.Flush()
-	close(l.done)
+func (a *BufferedChannelAdapter) Close() {
+	a.Flush()
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !a.closed {
+		close(a.messages)
+		a.ticker.Stop()
+	}
+	a.closed = true
 }
