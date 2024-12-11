@@ -68,8 +68,13 @@ func (b *Broker) writeLoop() {
 			if !ok {
 				return
 			}
-			closeData := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, err.Error())
-			b.conn.WriteMessage(websocket.CloseMessage, closeData)
+			// In the websocket protocol (RFC 6455), a close frame payload cannot exceed 125 bytes
+			// Instead of truncating a long error message, we're going to send the error message first, then send a close
+			b.conn.WriteJSON(stream.Message{
+				Context: "error",
+				Content: err.Error(),
+			})
+			b.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseInternalServerErr, ""))
 
 		case <-b.done:
 			return
