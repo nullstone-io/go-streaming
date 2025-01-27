@@ -7,6 +7,7 @@ import (
 	"github.com/nullstone-io/go-streaming/stream"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 const (
@@ -19,6 +20,7 @@ type Broker struct {
 	messages <-chan stream.Message
 	errors   <-chan error
 	done     chan struct{}
+	mu       sync.Mutex
 }
 
 func StartBroker(w *json.ResponseWriter, r *json.Request, msgs <-chan stream.Message, errs <-chan error) (*Broker, error) {
@@ -58,11 +60,11 @@ func (b *Broker) writeLoop() {
 			hasEot := strings.HasSuffix(message.Content, stream.EndOfTransmission)
 			message.Content = strings.TrimSuffix(message.Content, stream.EndOfTransmission)
 			if len(message.Content) > 0 {
-				b.conn.WriteJSON(message)
+				b.writeJsonMessage(message)
 			}
 			if hasEot {
 				closeData := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "end of transmission")
-				b.conn.WriteMessage(websocket.CloseMessage, closeData)
+				b.writeRawMessage(websocket.CloseMessage, closeData)
 			}
 		case err, ok := <-b.errors:
 			if !ok {
@@ -70,11 +72,11 @@ func (b *Broker) writeLoop() {
 			}
 			// In the websocket protocol (RFC 6455), a close frame payload cannot exceed 125 bytes
 			// Instead of truncating a long error message, we're going to send the error message first, then send a close
-			b.conn.WriteJSON(stream.Message{
+			b.writeJsonMessage(stream.Message{
 				Context: "error",
 				Content: err.Error(),
 			})
-			b.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseInternalServerErr, ""))
+			b.writeRawMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseInternalServerErr, ""))
 
 		case <-b.done:
 			return
@@ -97,9 +99,21 @@ func (b *Broker) readLoop() {
 		// normally we would send a message with type PongMessage
 		// even though this is a pong message, the spec says to respond with the same contents as the ping
 		if msgType == websocket.PingMessage || string(msg) == PingMessage {
-			b.conn.WriteMessage(websocket.TextMessage, msg)
+			b.writeRawMessage(websocket.TextMessage, msg)
 		}
 	}
+}
+
+func (b *Broker) writeRawMessage(messageType int, data []byte) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.conn.WriteMessage(messageType, data)
+}
+
+func (b *Broker) writeJsonMessage(msg stream.Message) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.conn.WriteJSON(msg)
 }
 
 func (b *Broker) WaitForClose() {
