@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/BSick7/go-api v0.11.1
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/stretchr/testify v1.8.3
