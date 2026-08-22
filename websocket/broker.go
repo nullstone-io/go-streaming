@@ -1,13 +1,17 @@
 package websocket
 
 import (
+	"context"
 	"fmt"
 	"github.com/BSick7/go-api/json"
 	"github.com/gorilla/websocket"
 	"github.com/nullstone-io/go-streaming/stream"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -16,11 +20,12 @@ const (
 )
 
 type Broker struct {
-	conn     *websocket.Conn
-	messages <-chan stream.Message
-	errors   <-chan error
-	done     chan struct{}
-	mu       sync.Mutex
+	conn      *websocket.Conn
+	messages  <-chan stream.Message
+	errors    <-chan error
+	done      chan struct{}
+	mu        sync.Mutex
+	handshake *handshake
 }
 
 func StartBroker(w *json.ResponseWriter, r *json.Request, msgs <-chan stream.Message, errs <-chan error) (*Broker, error) {
@@ -30,20 +35,48 @@ func StartBroker(w *json.ResponseWriter, r *json.Request, msgs <-chan stream.Mes
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 
+	hs := handshakeFromContext(r.Context())
+
 	conn, err := upgrader.Upgrade(w.ResponseWriter, r.Request, nil)
 	if err != nil {
-		return nil, fmt.Errorf("unable to upgrade to websocket connection: %s", err)
+		err = fmt.Errorf("unable to upgrade to websocket connection: %s", err)
+		if hs != nil {
+			hs.span.RecordError(err)
+			hs.span.SetStatus(codes.Error, err.Error())
+			hs.end()
+		}
+		return nil, err
+	}
+	if hs != nil {
+		hs.span.SetAttributes(semconv.HTTPResponseStatusCode(http.StatusSwitchingProtocols))
 	}
 
 	broker := &Broker{
-		conn:     conn,
-		messages: msgs,
-		errors:   errs,
-		done:     make(chan struct{}),
+		conn:      conn,
+		messages:  msgs,
+		errors:    errs,
+		done:      make(chan struct{}),
+		handshake: hs,
 	}
 
 	go broker.writeLoop()
 	go broker.readLoop()
+
+	// The request's context is cancelled when its handler returns, long before the client disconnects.
+	metricCtx := context.WithoutCancel(r.Context())
+	metricAttrs := routeAttr(hs)
+	activeConnections.Add(metricCtx, 1, metricAttrs)
+	startedAt := time.Now()
+
+	// This waits on done directly rather than calling WaitForClose, which ends the handshake span -
+	// doing that here would close the span out the moment StartBroker returned. It also runs whether
+	// or not the handler ever waits on the connection, so the counter stays balanced for handlers
+	// that return without waiting.
+	go func() {
+		<-broker.done
+		activeConnections.Add(metricCtx, -1, metricAttrs)
+		connectionDuration.Record(metricCtx, time.Since(startedAt).Seconds(), metricAttrs)
+	}()
 
 	return broker, nil
 }
@@ -116,6 +149,14 @@ func (b *Broker) writeJsonMessage(msg stream.Message) error {
 	return b.conn.WriteJSON(msg)
 }
 
+// WaitForClose blocks until the client disconnects.
+//
+// Reaching it means the handler is done setting the connection up - established, hydrated, listeners
+// started - and is now only holding it open, so the handshake span ends here rather than running for
+// the life of the connection.
 func (b *Broker) WaitForClose() {
+	if b.handshake != nil {
+		b.handshake.end()
+	}
 	<-b.done
 }

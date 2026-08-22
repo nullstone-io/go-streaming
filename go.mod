@@ -9,6 +9,11 @@ require (
 	github.com/redis/go-redis/extra/redisotel/v9 v9.21.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/stretchr/testify v1.11.1
+	go.opentelemetry.io/otel v1.44.0
+	go.opentelemetry.io/otel/metric v1.44.0
+	go.opentelemetry.io/otel/sdk v1.44.0
+	go.opentelemetry.io/otel/sdk/metric v1.44.0
+	go.opentelemetry.io/otel/trace v1.44.0
 )
 
 require (
@@ -23,9 +28,7 @@ require (
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.21.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.44.0 // indirect
-	go.opentelemetry.io/otel/metric v1.44.0 // indirect
-	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
