@@ -3,7 +3,7 @@ module github.com/nullstone-io/go-streaming
 go 1.25.0
 
 require (
-	github.com/BSick7/go-api v0.18.3
+	github.com/BSick7/go-api v0.18.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/redis/go-redis/extra/redisotel/v9 v9.22.0
