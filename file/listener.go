@@ -43,7 +43,7 @@ func (l *Listener) readLoop() {
 
 	// file typically hasn't been created yet
 	// go ahead and create it and be ready to begin reading from it
-	file, err := os.OpenFile(l.Filename, os.O_CREATE|os.O_RDONLY, 0644)
+	file, err := os.OpenFile(l.Filename, os.O_CREATE|os.O_RDONLY, 0640)
 	if err != nil {
 		fileListenerLogger.Printf("unable to initialize file listener for file: %s", l.Filename)
 	}
